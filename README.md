@@ -1,1 +1,45 @@
-# Práticas em Computação em Nuvem com o modelo de serviço IaaS.
+# Cloud-Computing
+
+Práticas de Computação em Nuvem com o modelo de serviço **IaaS** (Infrastructure as a Service), cobrindo os dois principais provedores trabalhados ao longo dos estudos: **AWS** e **Azure**.
+
+Este repositório reúne templates de infraestrutura como código (CloudFormation e ARM Templates) e scripts de automação (bash) desenvolvidos como parte de exercícios práticos da disciplina de Cloud Computing.
+
+## Estrutura do repositório
+
+```
+Cloud-Computing/
+├── AWS/
+│   ├── Templates/                          → Templates CloudFormation (.json), organizados por exercício
+│   │   ├── 01-servidor-simples/            → VPC + Security Group + instância EC2
+│   │   ├── 02-servidor-web-ssh/            → Servidor com acesso Web + SSH
+│   │   ├── 03-wordpress/                   → Instância configurada para rodar WordPress
+│   │   ├── 04-vpc-multicamada/             → VPC com subnets, rotas, gateway e múltiplos servidores
+│   │   └── 05-cluster-autoscaling/         → Cluster com Auto Scaling, Load Balancer e RDS
+│   ├── Scripts/                            → Scripts bash de gerenciamento (menus, deploy, listagem de instâncias)
+│   └── Scripts-UserData-CloudFormation/    → Scripts de UserData usados dentro dos templates CloudFormation (NFS, WordPress)
+│
+├── Azure/
+│   ├── Templates/                          → ARM Templates (.json), organizados por exercício
+│   │   ├── 01-vm-linux/                    → Criação de VMs Linux/Ubuntu
+│   │   ├── 02-storage/                     → Conta de armazenamento (Storage Account)
+│   │   └── 03-modulos-arm/                 → Templates modulares (ARM linked templates)
+│   └── Scripts/                            → Scripts bash de gerenciamento (criar/listar/deletar VM, ARM, NFS)
+│
+└── README.md
+```
+
+## Sobre a organização
+
+Os templates dentro de cada subpasta numerada (`01-`, `02-`, ...) representam a **evolução de um mesmo exercício**: do rascunho inicial até a versão final/funcional. Os nomes de arquivo foram padronizados, mas o conteúdo original de cada versão foi mantido — nada foi descartado, já que o objetivo deste repositório é documentar o processo de aprendizado, não apenas o resultado final.
+
+Arquivos com sufixo `-final` ou o de maior número dentro da pasta tendem a ser a versão mais completa/corrigida daquele exercício.
+
+## Tecnologias
+
+- **AWS**: CloudFormation, EC2, VPC, Security Groups, Auto Scaling, RDS, Elastic Load Balancing
+- **Azure**: Azure Resource Manager (ARM Templates), Máquinas Virtuais, Storage Account
+- **Scripts**: Bash (automação via AWS CLI e Azure CLI)
+
+## Observação
+
+Repositório com fins de estudo. Os templates aqui presentes não devem ser usados em produção sem revisão de segurança (chaves, IPs liberados, credenciais em texto plano, etc.).
