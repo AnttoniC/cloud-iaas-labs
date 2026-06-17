@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel AWS — Menu Web</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --text-dim: #8b949e;
+    --accent: #ff9900; /* laranja AWS */
+    --accent-dim: #b86b00;
+    --ok: #3fb950;
+    --err: #f85149;
+    --mono: "JetBrains Mono", "Fira Code", Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    line-height: 1.5;
+  }
+
+  header {
+    padding: 24px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  header .tag {
+    color: var(--accent);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+
+  header h1 {
+    font-size: 18px;
+    margin: 0;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  header .subtitle {
+    margin-left: auto;
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 32px;
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 24px;
+  }
+
+  @media (max-width: 720px) {
+    main { grid-template-columns: 1fr; }
+  }
+
+  /* Abas de serviço (EC2 / RDS) */
+  .service-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+
+  button.service-tab {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+  }
+
+  button.service-tab.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: #1c2128;
+  }
+
+  nav {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .nav-group-label {
+    color: var(--text-dim);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 14px 0 4px 4px;
+  }
+  .nav-group-label:first-child { margin-top: 0; }
+
+  button.menu-item {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    text-align: left;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  button.menu-item:hover {
+    border-color: var(--accent-dim);
+    background: #1c2128;
+  }
+
+  button.menu-item.active {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  button.menu-item .num {
+    color: var(--text-dim);
+    margin-right: 8px;
+  }
+
+  .menu-panel { display: none; flex-direction: column; gap: 6px; }
+  .menu-panel.active { display: flex; }
+
+  section.console {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    min-height: 420px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .console-header {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .console-body {
+    padding: 16px;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .placeholder {
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+
+  pre.output {
+    background: #0a0d12;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px;
+    font-size: 12.5px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--text);
+  }
+
+  .status-ok { color: var(--ok); }
+  .status-err { color: var(--err); }
+
+  .action-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  input[type="text"] {
+    background: #0a0d12;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 13px;
+    flex: 1;
+    min-width: 200px;
+  }
+  input[type="text"]:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
+
+  button.action {
+    background: transparent;
+    border: 1px solid var(--accent-dim);
+    color: var(--accent);
+    padding: 8px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+  button.action:hover { background: rgba(255,153,0,0.08); }
+  button.action.danger { border-color: #b62324; color: var(--err); }
+  button.action.danger:hover { background: rgba(248,81,73,0.08); }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="tag">AWS://</span>
+  <h1>Painel Web para AWS CLI</h1>
+  <span class="subtitle">execução local · requer AWS CLI configurada</span>
+</header>
+
+<main>
+  <div>
+    <div class="service-tabs">
+      <button class="service-tab active" data-service="ec2">EC2</button>
+      <button class="service-tab" data-service="rds">RDS</button>
+    </div>
+
+    <!-- Submenu EC2 -->
+    <nav class="menu-panel active" id="menu-ec2">
+      <div class="nav-group-label">Dados das instâncias</div>
+      <button class="menu-item" data-action="ec2-ips-publicos"><span class="num">1</span>IPs públicos</button>
+      <button class="menu-item" data-action="ec2-image-ids"><span class="num">2</span>Image IDs</button>
+      <button class="menu-item" data-action="ec2-ips-privados"><span class="num">3</span>IPs privados</button>
+      <button class="menu-item" data-action="ec2-nomes"><span class="num">4</span>Nomes (Tags)</button>
+      <button class="menu-item" data-action="ec2-amis-linux"><span class="num">5</span>Minhas AMIs Linux</button>
+      <button class="menu-item" data-action="ec2-amis-amazon-linux"><span class="num">6</span>Amazon Linux (recentes)</button>
+      <button class="menu-item" data-action="ec2-amis-distro"><span class="num">7</span>Buscar por distro (Ubuntu, AlmaLinux, RHEL, Debian)</button>
+      <button class="menu-item" data-action="ec2-subredes"><span class="num">8</span>Subredes</button>
+      <button class="menu-item" data-action="ec2-ids-e-nomes"><span class="num">9</span>IDs e nomes</button>
+      <button class="menu-item" data-action="ec2-detalhes"><span class="num">10</span>Detalhes de uma instância</button>
+      <button class="menu-item" data-action="ec2-key-pairs"><span class="num">11</span>Listar Key Pairs</button>
+
+      <div class="nav-group-label">Security Groups</div>
+      <button class="menu-item" data-action="ec2-sg-listar"><span class="num">12</span>Listar Security Groups</button>
+      <button class="menu-item" data-action="ec2-sg-criar-regra"><span class="num">13</span>Criar regra de entrada</button>
+
+      <div class="nav-group-label">Ciclo de vida</div>
+      <button class="menu-item" data-action="ec2-criar"><span class="num">14</span>Criar nova instância</button>
+      <button class="menu-item" data-action="ec2-ciclo-vida"><span class="num">15</span>Iniciar / Parar / Terminar</button>
+    </nav>
+
+    <!-- Submenu RDS -->
+    <nav class="menu-panel" id="menu-rds">
+      <div class="nav-group-label">Dados das instâncias</div>
+      <button class="menu-item" data-action="rds-instancias"><span class="num">1</span>Instâncias (engine, status, endpoint)</button>
+      <button class="menu-item" data-action="rds-status"><span class="num">2</span>Status rápido</button>
+      <button class="menu-item" data-action="rds-engines"><span class="num">3</span>Engines disponíveis</button>
+
+      <div class="nav-group-label">Ciclo de vida</div>
+      <button class="menu-item" data-action="rds-ciclo-vida"><span class="num">4</span>Iniciar / Parar instância</button>
+    </nav>
+  </div>
+
+  <section class="console">
+    <div class="console-header">
+      <span id="console-title">console</span>
+      <span id="console-status"></span>
+    </div>
+    <div class="console-body" id="console-body">
+      <p class="placeholder">Selecione um serviço (EC2 ou RDS) e uma opção no menu ao lado para executar o comando AWS CLI correspondente.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+const consoleBody = document.getElementById('console-body');
+const consoleTitle = document.getElementById('console-title');
+const consoleStatus = document.getElementById('console-status');
+
+const ENDPOINTS = {
+  'ec2-ips-publicos': '/api/ec2/listar/ips-publicos',
+  'ec2-image-ids': '/api/ec2/listar/image-ids',
+  'ec2-ips-privados': '/api/ec2/listar/ips-privados',
+  'ec2-nomes': '/api/ec2/listar/nomes',
+  'ec2-amis-linux': '/api/ec2/listar/amis-linux',
+  'ec2-amis-amazon-linux': '/api/ec2/listar/amis-amazon-linux-recente',
+  'ec2-subredes': '/api/ec2/listar/subredes',
+  'ec2-ids-e-nomes': '/api/ec2/listar/ids-e-nomes',
+  'ec2-sg-listar': '/api/ec2/security-groups/listar',
+  'ec2-key-pairs': '/api/ec2/key-pairs/listar',
+  'rds-instancias': '/api/rds/listar/instancias',
+  'rds-status': '/api/rds/listar/status',
+  'rds-engines': '/api/rds/listar/engines-disponiveis',
+};
+
+// ---------- Troca de aba de serviço (EC2 / RDS) ----------
+document.querySelectorAll('.service-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.service-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelectorAll('.menu-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('menu-' + tab.dataset.service).classList.add('active');
+
+    consoleTitle.textContent = 'console';
+    consoleStatus.textContent = '';
+    consoleBody.innerHTML = '<p class="placeholder">Selecione uma opção no menu ao lado.</p>';
+  });
+});
+
+function setActiveItem(button) {
+  button.closest('.menu-panel').querySelectorAll('.menu-item').forEach(b => b.classList.remove('active'));
+  button.classList.add('active');
+}
+
+function renderLoading(title) {
+  consoleTitle.textContent = title;
+  consoleStatus.textContent = 'executando...';
+  consoleStatus.className = '';
+  consoleBody.innerHTML = '<p class="placeholder">Aguardando resposta da AWS CLI…</p>';
+}
+
+function renderResult(result) {
+  consoleStatus.textContent = result.ok ? 'sucesso' : 'erro';
+  consoleStatus.className = result.ok ? 'status-ok' : 'status-err';
+  const text = result.ok
+    ? (result.stdout || '(sem retorno)')
+    : (result.stderr || 'Erro desconhecido.');
+  consoleBody.innerHTML = '<pre class="output"></pre>';
+  consoleBody.querySelector('pre').textContent = text;
+}
+
+async function fetchListagem(action, title) {
+  renderLoading(title);
+  try {
+    const resp = await fetch(ENDPOINTS[action]);
+    const data = await resp.json();
+    renderResult(data);
+  } catch (err) {
+    renderResult({ ok: false, stderr: 'Falha ao conectar com o backend Flask: ' + err.message });
+  }
+}
+
+// ---------- EC2: Buscar AMIs por distro (dropdown) ----------
+function renderEc2AmisDistro() {
+  consoleTitle.textContent = 'EC2 — Buscar AMIs por distro';
+  consoleStatus.textContent = '';
+  consoleBody.innerHTML = `
+    <div class="action-row">
+      <select id="distro-select" style="background:#0a0d12;border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:4px;font-family:var(--mono);font-size:13px;">
+        <option value="ubuntu">Ubuntu</option>
+        <option value="almalinux">AlmaLinux</option>
+        <option value="rhel">Red Hat (RHEL)</option>
+        <option value="debian">Debian</option>
+      </select>
+      <button class="action" id="distro-buscar-btn">Buscar</button>
+    </div>
+    <p class="placeholder">Mostra as 20 AMIs mais recentes da distro escolhida, publicadas pelo fabricante oficial.</p>
+  `;
+
+  document.getElementById('distro-buscar-btn').addEventListener('click', async () => {
+    const distro = document.getElementById('distro-select').value;
+    consoleStatus.textContent = 'executando...';
+    consoleStatus.className = '';
+    try {
+      const resp = await fetch(`/api/ec2/listar/amis-por-distro/${distro}`);
+      const data = await resp.json();
+      renderResult(data);
+    } catch (err) {
+      renderResult({ ok: false, stderr: 'Falha ao conectar com o backend: ' + err.message });
+    }
+  });
+}
+
+// ---------- EC2: Detalhes de uma instância específica ----------
+function renderEc2Detalhes() {
+  consoleTitle.textContent = 'EC2 — Detalhes de uma instância';
+  consoleStatus.textContent = '';
+  consoleBody.innerHTML = `
+    <div class="action-row">
+      <input type="text" id="ec2-detalhes-id-input" placeholder="Instance ID (ex: i-0123456789abcdef0)">
+      <button class="action" id="ec2-detalhes-btn">Consultar</button>
+    </div>
+    <p class="placeholder">Mostra status, tipo, AMI, data de lançamento, IPs, security groups e mais.</p>
+  `;
+
+  document.getElementById('ec2-detalhes-btn').addEventListener('click', async () => {
+    const id = document.getElementById('ec2-detalhes-id-input').value.trim();
+    if (!id) {
+      renderResult({ ok: false, stderr: 'Informe o Instance ID antes de continuar.' });
+      return;
+    }
+    consoleStatus.textContent = 'executando...';
+    consoleStatus.className = '';
+    try {
+      const resp = await fetch(`/api/ec2/instancia/${encodeURIComponent(id)}/detalhes`);
+      const data = await resp.json();
+      renderResult(data);
+    } catch (err) {
+      renderResult({ ok: false, stderr: 'Falha ao conectar com o backend: ' + err.message });
+    }
+  });
+}
+
+// ---------- EC2: Security Groups - listar ----------
+// (usa fetchListagem genérico, já mapeado em ENDPOINTS como 'ec2-sg-listar')
+
+// ---------- EC2: Security Groups - criar regra de entrada ----------
+function renderEc2SgCriarRegra() {
+  consoleTitle.textContent = 'EC2 — Criar regra de entrada (Security Group)';
+  consoleStatus.textContent = '';
+  consoleBody.innerHTML = `
+    <div class="action-row">
+      <input type="text" id="sg-id-input" placeholder="Security Group ID (ex: sg-0123456789abcdef0)">
+    </div>
+    <div class="action-row">
+      <input type="text" id="sg-protocolo-input" placeholder="Protocolo (tcp, udp ou icmp)" value="tcp" style="max-width:160px">
+      <input type="text" id="sg-porta-input" placeholder="Porta (ex: 22)" style="max-width:120px">
+      <input type="text" id="sg-cidr-input" placeholder="Origem CIDR (ex: 0.0.0.0/0)">
+    </div>
+    <div class="action-row">
+      <button class="action" id="sg-criar-btn">Criar regra</button>
+    </div>
+    <p class="placeholder">Libera a porta informada para o bloco CIDR de origem, no Security Group escolhido.</p>
+  `;
+
+  document.getElementById('sg-criar-btn').addEventListener('click', async () => {
+    const groupId = document.getElementById('sg-id-input').value.trim();
+    const protocolo = document.getElementById('sg-protocolo-input').value.trim();
+    const porta = document.getElementById('sg-porta-input').value.trim();
+    const cidr = document.getElementById('sg-cidr-input').value.trim();
+
+    if (!groupId || !protocolo || !porta || !cidr) {
+      renderResult({ ok: false, stderr: 'Preencha todos os campos antes de continuar.' });
+      return;
+    }
+
+    consoleStatus.textContent = 'executando...';
+    consoleStatus.className = '';
+    try {
+      const resp = await fetch(`/api/ec2/security-groups/${encodeURIComponent(groupId)}/regra`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ protocolo, porta: Number(porta), cidr }),
+      });
+      const data = await resp.json();
+      renderResult(data);
+    } catch (err) {
+      renderResult({ ok: false, stderr: 'Falha ao conectar com o backend: ' + err.message });
+    }
+  });
+}
+
+// ---------- EC2: Criar nova instância ----------
+function renderEc2Criar() {
+  consoleTitle.textContent = 'EC2 — Criar nova instância';
+  consoleStatus.textContent = '';
+  consoleBody.innerHTML = `
+    <div class="action-row">
+      <input type="text" id="criar-ami-input" placeholder="AMI ID (ex: ami-0123456789abcdef0)">
+    </div>
+    <div class="action-row">
+      <select id="criar-tipo-select" style="background:#0a0d12;border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:4px;font-family:var(--mono);font-size:13px;">
+        <option value="t2.micro">t2.micro</option>
+        <option value="t2.small">t2.small</option>
+        <option value="t2.medium">t2.medium</option>
+        <option value="t3.micro">t3.micro</option>
+        <option value="t3.small">t3.small</option>
+        <option value="t3.medium">t3.medium</option>
+      </select>
+      <input type="text" id="criar-keyname-input" placeholder="Nome do Key Pair">
+    </div>
+    <div class="action-row">
+      <input type="text" id="criar-sg-input" placeholder="Security Group ID (opcional)">
+      <input type="text" id="criar-nome-input" placeholder="Nome da instância (opcional)">
+    </div>
+    <div class="action-row">
+      <button class="action" id="criar-btn">Criar instância</button>
+    </div>
+    <p class="placeholder">Apenas tipos pequenos (t2/t3 micro, small, medium) são permitidos por este painel, para evitar custo inesperado.</p>
+  `;
+
+  document.getElementById('criar-btn').addEventListener('click', async () => {
+    const ami = document.getElementById('criar-ami-input').value.trim();
+    const tipo = document.getElementById('criar-tipo-select').value;
+    const keyName = document.getElementById('criar-keyname-input').value.trim();
+    const securityGroup = document.getElementById('criar-sg-input').value.trim();
+    const nome = document.getElementById('criar-nome-input').value.trim();
+
+    if (!ami || !keyName) {
+      renderResult({ ok: false, stderr: 'Informe ao menos a AMI e o Key Pair antes de continuar.' });
+      return;
+    }
+    if (!confirm(`Confirma a criação de uma instância ${tipo} com a AMI ${ami}?`)) {
+      return;
+    }
+
+    consoleStatus.textContent = 'executando...';
+    consoleStatus.className = '';
+    try {
+      const resp = await fetch('/api/ec2/instancia/criar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ami, tipo, key_name: keyName, security_group: securityGroup, nome }),
+      });
+      const data = await resp.json();
+      renderResult(data);
+    } catch (err) {
+      renderResult({ ok: false, stderr: 'Falha ao conectar com o backend: ' + err.message });
+    }
+  });
+}
+
+// ---------- EC2: Iniciar / Parar / Terminar ----------
+function renderEc2CicloVida() {
+  consoleTitle.textContent = 'EC2 — Iniciar / Parar / Terminar instância';
+  consoleStatus.textContent = '';
+  consoleBody.innerHTML = `
+    <div class="action-row">
+      <input type="text" id="ec2-id-input" placeholder="Instance ID (ex: i-0123456789abcdef0)">
+    </div>
+    <div class="action-row">
+      <button class="action" id="ec2-btn-iniciar">Iniciar</button>
+      <button class="action" id="ec2-btn-parar">Parar</button>
+      <button class="action danger" id="ec2-btn-terminar">Terminar</button>
+    </div>
+    <p class="placeholder">O resultado do comando aparece aqui depois da execução.</p>
+  `;
+
+  const input = document.getElementById('ec2-id-input');
+
+  async function executar(acao, label) {
+    const id = input.value.trim();
+    if (!id) {
+      renderResult({ ok: false, stderr: 'Informe o Instance ID antes de continuar.' });
+      return;
+    }
+    if (acao === 'terminar' && !confirm(`Tem certeza que deseja TERMINAR (apagar) a instância ${id}? Essa ação não pode ser desfeita.`)) {
+      return;
+    }
+    consoleStatus.textContent = 'executando...';
+    consoleStatus.className = '';
+    consoleBody.insertAdjacentHTML('beforeend', '<p class="placeholder">' + label + ' ' + id + '…</p>');
+    try {
+      const resp = await fetch(`/api/ec2/instancia/${encodeURIComponent(id)}/${acao}`, { method: 'POST' });
+      const data = await resp.json();
+      consoleStatus.textContent = data.ok ? 'sucesso' : 'erro';
+      consoleStatus.className = data.ok ? 'status-ok' : 'status-err';
+      const text = data.ok ? (data.stdout || '(sem retorno)') : (data.stderr || 'Erro desconhecido.');
+      consoleBody.insertAdjacentHTML('beforeend', '<pre class="output"></pre>');
+      consoleBody.lastElementChild.textContent = text;
+    } catch (err) {
+      consoleStatus.textContent = 'erro';
+      consoleStatus.className = 'status-err';
+      consoleBody.insertAdjacentHTML('beforeend', '<pre class="output">Falha ao conectar com o backend: ' + err.message + '</pre>');
+    }
+  }
+
+  document.getElementById('ec2-btn-iniciar').addEventListener('click', () => executar('iniciar', 'Iniciando'));
+  document.getElementById('ec2-btn-parar').addEventListener('click', () => executar('parar', 'Parando'));
+  document.getElementById('ec2-btn-terminar').addEventListener('click', () => executar('terminar', 'Terminando'));
+}
+
+// ---------- RDS: Iniciar / Parar ----------
+function renderRdsCicloVida() {
+  consoleTitle.textContent = 'RDS — Iniciar / Parar instância';
+  consoleStatus.textContent = '';
+  consoleBody.innerHTML = `
+    <div class="action-row">
+      <input type="text" id="rds-id-input" placeholder="DB Instance Identifier (ex: meu-banco-wordpress)">
+    </div>
+    <div class="action-row">
+      <button class="action" id="rds-btn-iniciar">Iniciar</button>
+      <button class="action" id="rds-btn-parar">Parar</button>
+    </div>
+    <p class="placeholder">RDS não suporta "terminar" por esse painel - exclusão de banco exige confirmação extra na AWS CLI/Console.</p>
+  `;
+
+  const input = document.getElementById('rds-id-input');
+
+  async function executar(acao, label) {
+    const id = input.value.trim();
+    if (!id) {
+      renderResult({ ok: false, stderr: 'Informe o DB Instance Identifier antes de continuar.' });
+      return;
+    }
+    consoleStatus.textContent = 'executando...';
+    consoleStatus.className = '';
+    consoleBody.insertAdjacentHTML('beforeend', '<p class="placeholder">' + label + ' ' + id + '…</p>');
+    try {
+      const resp = await fetch(`/api/rds/instancia/${encodeURIComponent(id)}/${acao}`, { method: 'POST' });
+      const data = await resp.json();
+      consoleStatus.textContent = data.ok ? 'sucesso' : 'erro';
+      consoleStatus.className = data.ok ? 'status-ok' : 'status-err';
+      const text = data.ok ? (data.stdout || '(sem retorno)') : (data.stderr || 'Erro desconhecido.');
+      consoleBody.insertAdjacentHTML('beforeend', '<pre class="output"></pre>');
+      consoleBody.lastElementChild.textContent = text;
+    } catch (err) {
+      consoleStatus.textContent = 'erro';
+      consoleStatus.className = 'status-err';
+      consoleBody.insertAdjacentHTML('beforeend', '<pre class="output">Falha ao conectar com o backend: ' + err.message + '</pre>');
+    }
+  }
+
+  document.getElementById('rds-btn-iniciar').addEventListener('click', () => executar('iniciar', 'Iniciando'));
+  document.getElementById('rds-btn-parar').addEventListener('click', () => executar('parar', 'Parando'));
+}
+
+// ---------- Roteamento de clique nos itens de menu ----------
+document.querySelectorAll('.menu-item').forEach(button => {
+  button.addEventListener('click', () => {
+    setActiveItem(button);
+    const action = button.dataset.action;
+
+    if (action === 'ec2-ciclo-vida') {
+      renderEc2CicloVida();
+    } else if (action === 'ec2-amis-distro') {
+      renderEc2AmisDistro();
+    } else if (action === 'ec2-detalhes') {
+      renderEc2Detalhes();
+    } else if (action === 'ec2-sg-criar-regra') {
+      renderEc2SgCriarRegra();
+    } else if (action === 'ec2-criar') {
+      renderEc2Criar();
+    } else if (action === 'rds-ciclo-vida') {
+      renderRdsCicloVida();
+    } else {
+      fetchListagem(action, button.textContent.trim());
+    }
+  });
+});
+</script>
+
+</body>
+</html>
