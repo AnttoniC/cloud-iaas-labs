@@ -49,7 +49,7 @@ case $x in
         echo "Inciaando a instancia $name"
 	;;
 	#4)
-	#bash menuListarDataIntancia.sh
+	#bash menuListarDataInstancia.sh
 	#;;
 	4)
          echo "saindo..."

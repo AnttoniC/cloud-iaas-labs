@@ -25,7 +25,7 @@ echo "Opção informada ($x)"
 
 case $x in 
 	1)
-	bash menuListarDataIntancia.sh
+	bash menuListarDataInstancia.sh
 	;;
 	2)
 	bash menuIniciarInsta.sh
