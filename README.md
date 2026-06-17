@@ -2,7 +2,7 @@
 
 Práticas de Computação em Nuvem com o modelo de serviço **IaaS** (Infrastructure as a Service), cobrindo os dois principais provedores trabalhados ao longo dos estudos: **AWS** e **Azure**.
 
-Este repositório reúne templates de infraestrutura como código (CloudFormation e ARM Templates), scripts de automação (bash) e um painel web próprio para a AWS CLI, desenvolvidos como parte de exercícios práticos da disciplina de Cloud Computing.
+Este repositório reúne templates de infraestrutura como código (CloudFormation e ARM Templates), scripts de automação (bash) e painéis web próprios para a AWS CLI e a Azure CLI, desenvolvidos como parte de exercícios práticos da disciplina de Cloud Computing.
 
 ## Estrutura do repositório
 
@@ -24,7 +24,8 @@ cloud-iaas-labs/
 │   │   ├── 01-vm-linux/                    → Criação de VMs Linux/Ubuntu
 │   │   ├── 02-storage/                     → Conta de armazenamento (Storage Account)
 │   │   └── 03-modulos-arm/                 → Templates modulares (ARM linked templates)
-│   └── Scripts/                            → Scripts bash de gerenciamento (criar/listar/deletar VM, ARM, NFS)
+│   ├── Scripts/                            → Scripts bash de gerenciamento (criar/listar/deletar VM, ARM, NFS)
+│   └── painel-azurecli/                    → Painel web (Flask) que executa comandos Azure CLI via navegador
 │
 └── README.md
 ```
@@ -39,14 +40,18 @@ Arquivos com sufixo `-final` ou o de maior número dentro da pasta tendem a ser 
 
 Interface web (Python + Flask) que executa comandos reais da AWS CLI a partir de botões e formulários no navegador, organizada em abas EC2 e RDS. Cobre listagem de instâncias, IPs, AMIs (incluindo busca por distro: Ubuntu, AlmaLinux, Red Hat, Debian), Security Groups, Key Pairs, criação de instância, e iniciar/parar/terminar recursos. Veja `AWS/painel-awscli/README.md` para instruções de uso e a lista completa de funcionalidades.
 
-> Atenção: executa comandos reais na conta AWS configurada na máquina. Feito para uso local/estudo — não deve ser exposto na internet sem autenticação.
+## Painel Web para Azure CLI (Azure/painel-azurecli)
+
+Réplica da mesma metodologia do painel AWS, adaptada para os conceitos da Azure: organizado em abas Virtual Machines e Banco de Dados (MySQL/PostgreSQL Flexible Server). Cobre listagem de VMs, IPs, tamanhos disponíveis, busca de imagens por distro, detalhes de VM, Network Security Groups, SSH Keys, criação/exclusão de Resource Group, criação de VM, e iniciar/parar/terminar recursos. Veja `Azure/painel-azurecli/README.md` para instruções de uso e a lista completa de funcionalidades.
+
+> Atenção: ambos os painéis executam comandos reais nas contas AWS/Azure configuradas na máquina. Feitos para uso local/estudo — não devem ser expostos na internet sem autenticação.
 
 ## Tecnologias
 
 - **AWS**: CloudFormation, EC2, VPC, Security Groups, Auto Scaling, RDS, Elastic Load Balancing
-- **Azure**: Azure Resource Manager (ARM Templates), Máquinas Virtuais, Storage Account
+- **Azure**: Azure Resource Manager (ARM Templates), Máquinas Virtuais, Network Security Groups, Resource Groups, Azure Database for MySQL/PostgreSQL
 - **Scripts**: Bash (automação via AWS CLI e Azure CLI)
-- **Painel Web**: Python, Flask
+- **Painéis Web**: Python, Flask
 
 ## Observação
 
