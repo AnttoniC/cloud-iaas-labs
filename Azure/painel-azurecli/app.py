@@ -300,6 +300,62 @@ def resource_groups_listar():
     return jsonify(resultado)
 
 
+@app.route("/api/locations/listar")
+def locations_listar():
+    """Lista as regiões (locations) disponíveis na subscription, para popular o seletor de região."""
+    resultado = run_az_command([
+        "account", "list-locations",
+        "--query", "[?metadata.regionType=='Physical'].{Nome:name, NomeExibicao:displayName}",
+        "--output", "json",
+    ])
+    return jsonify(resultado)
+
+
+@app.route("/api/resource-groups/criar", methods=["POST"])
+def resource_groups_criar():
+    """
+    Cria um novo Resource Group.
+    Espera JSON: {"nome": "meu-rg", "location": "brazilsouth"}
+    """
+    dados = request.get_json(silent=True) or {}
+    nome = dados.get("nome", "")
+    location = dados.get("location", "")
+
+    if not validar_nome(nome):
+        return jsonify({"ok": False, "stderr": "Nome do Resource Group inválido."}), 400
+    if not validar_nome(location):
+        return jsonify({"ok": False, "stderr": "Região (location) inválida."}), 400
+
+    resultado = run_az_command([
+        "group", "create",
+        "--name", nome,
+        "--location", location,
+        "--query", "{Nome:name, Localizacao:location, Status:properties.provisioningState}",
+        "--output", "json",
+    ])
+    return jsonify(resultado)
+
+
+@app.route("/api/resource-groups/<nome>/deletar", methods=["POST"])
+def resource_groups_deletar(nome):
+    """
+    Deleta um Resource Group e TODOS os recursos dentro dele
+    (VMs, discos, NSGs, IPs públicos, etc.) de forma irreversível.
+    Usa --no-wait porque a exclusão completa pode levar minutos,
+    o que ultrapassaria o timeout padrão da requisição.
+    """
+    if not validar_nome(nome):
+        return jsonify({"ok": False, "stderr": "Nome do Resource Group inválido."}), 400
+
+    resultado = run_az_command([
+        "group", "delete",
+        "--name", nome,
+        "--yes",
+        "--no-wait",
+    ])
+    return jsonify(resultado)
+
+
 @app.route("/api/ssh-keys/listar")
 def ssh_keys_listar():
     """Lista as SSH Public Keys cadastradas como recurso Azure, equivalente aos Key Pairs da AWS."""

@@ -242,15 +242,17 @@
       <button class="menu-item" data-action="vm-imagens-distro"><span class="num">4</span>Buscar imagem por distro</button>
       <button class="menu-item" data-action="vm-detalhes"><span class="num">5</span>Detalhes de uma VM</button>
       <button class="menu-item" data-action="vm-resource-groups"><span class="num">6</span>Listar Resource Groups</button>
-      <button class="menu-item" data-action="vm-ssh-keys"><span class="num">7</span>Listar SSH Keys</button>
+      <button class="menu-item" data-action="vm-resource-groups-criar"><span class="num">7</span>Criar Resource Group</button>
+      <button class="menu-item" data-action="vm-resource-groups-deletar"><span class="num">8</span>Deletar Resource Group</button>
+      <button class="menu-item" data-action="vm-ssh-keys"><span class="num">9</span>Listar SSH Keys</button>
 
       <div class="nav-group-label">Network Security Groups</div>
-      <button class="menu-item" data-action="vm-nsg-listar"><span class="num">8</span>Listar NSGs</button>
-      <button class="menu-item" data-action="vm-nsg-criar-regra"><span class="num">9</span>Criar regra de entrada</button>
+      <button class="menu-item" data-action="vm-nsg-listar"><span class="num">10</span>Listar NSGs</button>
+      <button class="menu-item" data-action="vm-nsg-criar-regra"><span class="num">11</span>Criar regra de entrada</button>
 
       <div class="nav-group-label">Ciclo de vida</div>
-      <button class="menu-item" data-action="vm-criar"><span class="num">10</span>Criar nova VM</button>
-      <button class="menu-item" data-action="vm-ciclo-vida"><span class="num">11</span>Iniciar / Parar / Terminar</button>
+      <button class="menu-item" data-action="vm-criar"><span class="num">12</span>Criar nova VM</button>
+      <button class="menu-item" data-action="vm-ciclo-vida"><span class="num">13</span>Iniciar / Parar / Terminar</button>
     </nav>
 
     <!-- Submenu Banco de Dados -->
@@ -332,6 +334,111 @@ async function fetchListagem(action, title) {
   } catch (err) {
     renderResult({ ok: false, stderr: 'Falha ao conectar com o backend Flask: ' + err.message });
   }
+}
+
+// ---------- VM: Criar Resource Group ----------
+function renderResourceGroupCriar() {
+  consoleTitle.textContent = 'Criar Resource Group';
+  consoleStatus.textContent = '';
+  consoleBody.innerHTML = `
+    <div class="action-row">
+      <input type="text" id="rg-criar-nome-input" placeholder="Nome do Resource Group">
+    </div>
+    <div class="action-row">
+      <select id="rg-criar-location-select">
+        <option value="">Carregando regiões...</option>
+      </select>
+    </div>
+    <div class="action-row">
+      <button class="action" id="rg-criar-btn">Criar</button>
+    </div>
+    <p class="placeholder">O nome deve conter apenas letras, números, hífen, underscore ou ponto.</p>
+  `;
+
+  // Popula o dropdown de regiões a partir da Azure CLI
+  const select = document.getElementById('rg-criar-location-select');
+  fetch('/api/locations/listar')
+    .then(resp => resp.json())
+    .then(data => {
+      if (data.ok && data.stdout) {
+        try {
+          const locations = JSON.parse(data.stdout);
+          select.innerHTML = locations
+            .map(loc => `<option value="${loc.Nome}">${loc.NomeExibicao} (${loc.Nome})</option>`)
+            .join('');
+          // Prioriza brazilsouth se existir na lista, por ser a região mais comum para uso no Brasil
+          if (locations.some(loc => loc.Nome === 'brazilsouth')) {
+            select.value = 'brazilsouth';
+          }
+        } catch (e) {
+          select.innerHTML = '<option value="brazilsouth">Brazil South (brazilsouth)</option><option value="eastus">East US (eastus)</option>';
+        }
+      } else {
+        // Azure CLI indisponível ou erro: oferece opções manuais comuns como fallback
+        select.innerHTML = '<option value="brazilsouth">Brazil South (brazilsouth)</option><option value="eastus">East US (eastus)</option>';
+      }
+    })
+    .catch(() => {
+      select.innerHTML = '<option value="brazilsouth">Brazil South (brazilsouth)</option><option value="eastus">East US (eastus)</option>';
+    });
+
+  document.getElementById('rg-criar-btn').addEventListener('click', async () => {
+    const nome = document.getElementById('rg-criar-nome-input').value.trim();
+    const location = document.getElementById('rg-criar-location-select').value;
+
+    if (!nome || !location) {
+      renderResult({ ok: false, stderr: 'Informe o nome e selecione uma região.' });
+      return;
+    }
+    consoleStatus.textContent = 'executando...';
+    consoleStatus.className = '';
+    try {
+      const resp = await fetch('/api/resource-groups/criar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, location }),
+      });
+      const data = await resp.json();
+      renderResult(data);
+    } catch (err) {
+      renderResult({ ok: false, stderr: 'Falha ao conectar com o backend: ' + err.message });
+    }
+  });
+}
+
+// ---------- VM: Deletar Resource Group ----------
+function renderResourceGroupDeletar() {
+  consoleTitle.textContent = 'Deletar Resource Group';
+  consoleStatus.textContent = '';
+  consoleBody.innerHTML = `
+    <div class="action-row">
+      <input type="text" id="rg-deletar-nome-input" placeholder="Nome do Resource Group">
+    </div>
+    <div class="action-row">
+      <button class="action danger" id="rg-deletar-btn">Deletar</button>
+    </div>
+    <p class="placeholder">Apaga o Resource Group e TODOS os recursos dentro dele (VMs, discos, NSGs, IPs). Ação irreversível e pode levar minutos para concluir.</p>
+  `;
+
+  document.getElementById('rg-deletar-btn').addEventListener('click', async () => {
+    const nome = document.getElementById('rg-deletar-nome-input').value.trim();
+    if (!nome) {
+      renderResult({ ok: false, stderr: 'Informe o nome do Resource Group.' });
+      return;
+    }
+    if (!confirm(`Tem certeza que deseja DELETAR o Resource Group "${nome}" e TODOS os recursos dentro dele? Essa ação não pode ser desfeita.`)) {
+      return;
+    }
+    consoleStatus.textContent = 'executando...';
+    consoleStatus.className = '';
+    try {
+      const resp = await fetch(`/api/resource-groups/${encodeURIComponent(nome)}/deletar`, { method: 'POST' });
+      const data = await resp.json();
+      renderResult(data);
+    } catch (err) {
+      renderResult({ ok: false, stderr: 'Falha ao conectar com o backend: ' + err.message });
+    }
+  });
 }
 
 // ---------- VM: Tamanhos disponíveis (pede location) ----------
@@ -682,6 +789,10 @@ document.querySelectorAll('.menu-item').forEach(button => {
 
     if (action === 'vm-tamanhos') {
       renderVmTamanhos();
+    } else if (action === 'vm-resource-groups-criar') {
+      renderResourceGroupCriar();
+    } else if (action === 'vm-resource-groups-deletar') {
+      renderResourceGroupDeletar();
     } else if (action === 'vm-imagens-distro') {
       renderVmImagensDistro();
     } else if (action === 'vm-detalhes') {

@@ -54,6 +54,8 @@ Na AWS, o Instance ID já identifica uma instância de forma única. Na Azure, p
 | Buscar imagem por distro | Dropdown para buscar imagens recentes de Ubuntu, AlmaLinux, Red Hat (RHEL) ou Debian, retornando a URN (publisher:offer:sku:version) |
 | Detalhes de uma VM | Status, tamanho, IPs, zona, sistema operacional e Resource Group de uma VM específica |
 | Listar Resource Groups | Lista os Resource Groups disponíveis na subscription |
+| Criar Resource Group | Formulário com nome e seleção de região (dropdown populado a partir das regiões físicas disponíveis na subscription) |
+| Deletar Resource Group | Apaga um Resource Group e todos os recursos dentro dele. Usa `--no-wait` pois a exclusão completa pode levar minutos |
 | Listar SSH Keys | Lista as SSH Public Keys cadastradas como recurso Azure |
 | Listar NSGs | Lista os Network Security Groups de um Resource Group, com suas regras |
 | Criar regra de entrada | Cria uma regra de entrada (Allow/Inbound) em um NSG existente |
